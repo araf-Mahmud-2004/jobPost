@@ -49,17 +49,17 @@ const startServer = async () => {
 
     // Connect to MongoDB
     await mongoose.connect(MONGODB_URI, mongooseOptions);
-    console.log('✅ Successfully connected to MongoDB');
+    console.log(' Successfully connected to MongoDB');
     
     // Start the server
     const server = app.listen(PORT, () => {
-      console.log(`✅ Server running on port ${PORT}`);
-      console.log(`🔗 http://localhost:${PORT}`);
+      console.log(`Server running on port ${PORT}`);
+      console.log(` http://localhost:${PORT}`);
     });
 
     // Handle unhandled promise rejections
     process.on('unhandledRejection', (err: Error) => {
-      console.error('UNHANDLED REJECTION! 💥 Shutting down...');
+      console.error('UNHANDLED REJECTION!  Shutting down...');
       console.error(err.name, err);
       server.close(() => {
         process.exit(1);
@@ -68,13 +68,13 @@ const startServer = async () => {
 
     // Handle uncaught exceptions
     process.on('uncaughtException', (err) => {
-      console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
+      console.error('UNCAUGHT EXCEPTION!  Shutting down...');
       console.error(err.name, err);
       process.exit(1);
     });
 
   } catch (error) {
-    console.error('❌ Failed to connect to MongoDB');
+    console.error(' Failed to connect to MongoDB');
     console.error('Error details:', error);
     console.error('MongoDB URI used:', MONGODB_URI);
     process.exit(1);
