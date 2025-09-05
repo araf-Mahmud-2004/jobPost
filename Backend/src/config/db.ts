@@ -37,12 +37,14 @@ if (!cached) {
  * Establishes a connection to MongoDB using Mongoose
  * @returns {Promise<typeof mongoose>}
  */
-async function connectDB(): Promise<typeof mongoose> {
+export const connectDB = async (): Promise<typeof mongoose> => {
   if (cached.conn) {
+    console.log('Using existing database connection');
     return cached.conn;
   }
 
   if (!cached.promise) {
+    console.log('Creating new database connection to:', MONGODB_URI);
     const opts: mongoose.ConnectOptions = {
       bufferCommands: false,
       serverSelectionTimeoutMS: 10000, // 10 seconds timeout
@@ -52,14 +54,38 @@ async function connectDB(): Promise<typeof mongoose> {
   }
 
   try {
-    cached.conn = await cached.promise;
-    console.log('MongoDB connected successfully');
-    return cached.conn;
-  } catch (error) {
+    console.log('Waiting for database connection...');
+    const conn = await cached.promise;
+    if (!conn) {
+      throw new Error('Failed to establish database connection');
+    }
+
+    cached.conn = conn;
+    console.log('Database connected successfully');
+    
+    // Log all collections
+    if (!conn.connection.db) {
+      throw new Error('Database instance is not available');
+    }
+    
+    const db = conn.connection.db;
+    const collections = await db.listCollections().toArray();
+    console.log('Available collections:', collections.map(c => c.name));
+    
+    // Log sample data from applications collection if it exists
+    if (collections.some(c => c.name === 'applications')) {
+      const apps = await db.collection('applications').find({}).limit(3).toArray();
+      console.log('Sample applications:', JSON.stringify(apps, null, 2));
+    } else {
+      console.log('No applications collection found');
+    }
+    
+    return conn;
+  } catch (e) {
+    console.error('Database connection error:', e);
     cached.promise = null;
-    if (error instanceof Error) {
-      console.error('MongoDB connection error:', error.message);
-      throw new AppError('Database connection failed', 500, { error: error.message });
+    if (e instanceof Error) {
+      throw new AppError(`Database connection failed: ${e.message}`, 500);
     }
     throw new AppError('Database connection failed', 500);
   }

@@ -6,6 +6,7 @@ import 'dotenv/config';
 import { errorHandler } from './middleware/errorHandler';
 import jobRoutes from './routes/jobRoutes';
 import adminRoutes from './routes/adminRoutes';
+import applicationRoutes from './routes/applicationRoutes';
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/jobs', jobRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/applications', applicationRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
