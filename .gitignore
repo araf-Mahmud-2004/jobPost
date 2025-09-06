@@ -22,3 +22,6 @@ logs
 *.njsproj
 *.sln
 *.sw?
+
+# YoYo AI version control directory
+.yoyo/

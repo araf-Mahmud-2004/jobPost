@@ -3,6 +3,7 @@ import { AppError } from '../middleware/errorHandler';
 import { Application, IApplication } from '../models/applicationModel';
 import { Job, IJob } from '../models/jobModel';
 import mongoose from 'mongoose';
+import { AuthRequest } from '../middleware/authMiddleware';
 
 // Extend the Request type to include user information
 declare global {
@@ -19,8 +20,13 @@ declare global {
 }
 
 // Apply for a job
-export const applyForJob = async (req: Request, res: Response, next: NextFunction) => {
+export const applyForJob = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    // Ensure user is authenticated
+    if (!req.user || !req.user.id) {
+      return next(new AppError('Authentication required to apply for a job', 401));
+    }
+
     const jobId = req.params.jobId;
     
     if (!jobId) {
@@ -46,8 +52,8 @@ export const applyForJob = async (req: Request, res: Response, next: NextFunctio
       return next(new AppError('This job is no longer accepting applications', 400));
     }
 
-    // For testing, we'll use a default user ID if not provided
-    const userId = req.body.userId || new mongoose.Types.ObjectId();
+    // Use authenticated user's ID
+    const userId = req.user.id;
 
     // Check if user already applied
     const existingApplication = await Application.findOne({
@@ -86,13 +92,15 @@ export const applyForJob = async (req: Request, res: Response, next: NextFunctio
 };
 
 // Get all applications for a specific user
-export const getMyApplications = async (req: Request, res: Response, next: NextFunction) => {
+export const getMyApplications = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const userId = req.params.userId;
-    
-    if (!userId) {
-      return next(new AppError('User ID is required', 400));
+    // Ensure user is authenticated
+    if (!req.user || !req.user.id) {
+      return next(new AppError('Authentication required to view applications', 401));
     }
+
+    // Use authenticated user's ID
+    const userId = req.user.id;
 
     // Get applications without any population
     const applications = await Application.find({ user: userId })

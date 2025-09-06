@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { getProfile, updateProfile, changePassword, uploadResume } from "../controllers/userController";
-import { authMiddleware } from "../middlewares/authMiddleware";
-import { validate } from "../middlewares/validateMiddleware";
+import { authMiddleware } from "../middleware/authMiddleware";
+import { validateBody as validate } from "../middleware/validateRequest";
 import { updateUserSchema, changePasswordSchema } from "../validations/userSchemas";
 
 const router = Router();

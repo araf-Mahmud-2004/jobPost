@@ -23,9 +23,7 @@ const applicationSchema = new Schema<IApplication>(
     user: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      // Temporarily not required for testing
-      // required: [true, 'Application must belong to a user'],
-      default: new mongoose.Types.ObjectId(), // Default value for testing
+      required: [true, 'Application must belong to a user']
     },
     status: {
       type: String,

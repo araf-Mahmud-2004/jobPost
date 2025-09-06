@@ -1,12 +1,14 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import * as applicationController from '../controllers/applicationController';
+import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = express.Router({ mergeParams: true });
 
-// Apply for a job
+// Apply for a job (authentication required)
 router.post(
   '/',
+  authMiddleware,
   (req, res, next) => {
     try {
       // Accept jobId from either query params or request body
@@ -38,27 +40,31 @@ router.post(
   applicationController.applyForJob
 );
 
-// Get applications for the current user (temporary endpoint for testing)
+// Get applications for the current user (authentication required)
 router.get(
-  '/user/:userId',
+  '/my-applications',
+  authMiddleware,
   applicationController.getMyApplications
 );
 
-// Get all applications for a specific job
+// Get all applications for a specific job (authentication required)
 router.get(
   '/job/:jobId',
+  authMiddleware,
   applicationController.getJobApplications
 );
 
-// Update application status
+// Update application status (authentication required)
 router.patch(
   '/:id/status',
+  authMiddleware,
   applicationController.updateApplicationStatus
 );
 
-// Withdraw application
+// Withdraw application (authentication required)
 router.delete(
   '/:id',
+  authMiddleware,
   applicationController.withdrawApplication
 );
 

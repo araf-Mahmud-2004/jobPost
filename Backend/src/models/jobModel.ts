@@ -75,9 +75,7 @@ const jobSchema = new Schema<IJob>(
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      // Temporarily not required for testing
-      // required: [true, 'A job must be created by a user'],
-      default: new mongoose.Types.ObjectId(), // Default value for testing
+      required: [true, 'A job must be created by a user'],
     },
     status: {
       type: String,

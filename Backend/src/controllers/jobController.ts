@@ -2,16 +2,19 @@ import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../middleware/errorHandler';
 import { Job, IJob } from '../models/jobModel';
 import mongoose, { FilterQuery } from 'mongoose';
+import { AuthRequest } from '../middleware/authMiddleware';
 
 // Create a new job
-export const createJob = async (req: Request, res: Response, next: NextFunction) => {
+export const createJob = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    // Create a new ObjectId for createdBy
-    const tempUserId = new mongoose.Types.ObjectId();
+    // Ensure user is authenticated
+    if (!req.user || !req.user.id) {
+      return next(new AppError('Authentication required to create a job', 401));
+    }
     
     const newJob = await Job.create({
       ...req.body,
-      createdBy: tempUserId,
+      createdBy: req.user.id, // Use authenticated user's ID
       status: 'open', // Set default status
       applications: [] // Initialize empty applications array
     });
