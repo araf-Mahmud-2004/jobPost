@@ -20,7 +20,7 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [formData, setFormData] = useState({
-    currentPassword: "",
+    oldPassword: "",
     newPassword: "",
     confirmPassword: "",
   })
@@ -59,7 +59,7 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
     }
 
     try {
-      await userService.changePassword(formData.currentPassword, formData.newPassword)
+      await userService.changePassword(formData.oldPassword, formData.newPassword)
       
       toast({
         title: "Success",
@@ -68,7 +68,7 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
       
       // Reset form
       setFormData({
-        currentPassword: "",
+        oldPassword: "",
         newPassword: "",
         confirmPassword: "",
       })
@@ -104,28 +104,23 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="currentPassword">Current Password</Label>
+        <Label htmlFor="oldPassword">Current Password</Label>
         <div className="relative">
           <Input
-            id="currentPassword"
+            id="oldPassword"
             type={showPasswords.current ? "text" : "password"}
-            value={formData.currentPassword}
-            onChange={(e) => handleInputChange("currentPassword", e.target.value)}
+            value={formData.oldPassword}
+            onChange={(e) => handleInputChange("oldPassword", e.target.value)}
             required
+            className="pr-10"
           />
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
             onClick={() => togglePasswordVisibility("current")}
           >
-            {showPasswords.current ? (
-              <EyeOff className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <Eye className="h-4 w-4 text-muted-foreground" />
-            )}
-          </Button>
+            {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
         </div>
       </div>
 

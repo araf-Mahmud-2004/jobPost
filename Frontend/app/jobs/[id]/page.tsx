@@ -3,16 +3,21 @@
 import { useEffect, useMemo, useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
-import { Header } from "@/components/header"
+import { UserHeader } from "@/components/user-header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ApplyModal } from "@/components/apply-modal"
-import { MapPin, Clock, DollarSign, Building, Users, Calendar, ArrowLeft, Share2, Bookmark } from "lucide-react"
+import { MapPin, Clock, DollarSign, Building, Calendar, ArrowLeft, Briefcase } from "lucide-react"
 import { jobService, Job } from "@/services/jobService"
+import { applicationService } from "@/services/applicationService"
+import { useAuth } from "@/contexts/AuthContext"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useToast } from "@/components/ui/use-toast"
+import { WithdrawConfirmDialog } from "@/components/withdraw-confirm-dialog"
+import { EditApplicationModal } from "@/components/edit-application-modal"
 
 function formatSalary(salary?: number): string {
   if (typeof salary !== "number") return "Not specified"
@@ -32,55 +37,77 @@ export default function JobDetailsPage() {
   const [job, setJob] = useState<Job | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>("")
+  const [existingApplication, setExistingApplication] = useState<any>(null)
+  const [showWithdrawDialog, setShowWithdrawDialog] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const { user } = useAuth()
+  const { toast } = useToast()
 
   useEffect(() => {
     let active = true
     const id = params?.id as string
     if (!id) return
-    ;(async () => {
+
+    const fetchData = async () => {
       try {
-        const data = await jobService.getJob(id)
+        const [jobData, applications] = await Promise.all([
+          jobService.getJob(id),
+          user ? applicationService.getMyApplications() : Promise.resolve([])
+        ])
+        
         if (!active) return
-        setJob(data)
+        
+        setJob(jobData)
+        
+        // Check if user has already applied to this job
+        if (user) {
+          const existingApp = applications.find((app: any) => app.job._id === id)
+          if (existingApp) {
+            setExistingApplication(existingApp)
+          }
+        }
       } catch (e: any) {
         const message = e?.response?.data?.message || e?.message || "Failed to load job"
         setError(message)
       } finally {
         if (active) setLoading(false)
       }
-    })()
+    }
+
+    fetchData()
+    
     return () => {
       active = false
     }
-  }, [params?.id])
+  }, [params?.id, user])
 
   const ui = useMemo(() => {
     if (!job) return null
     return {
       id: job._id,
       title: job.title,
-      company: job.company?.name || "Unknown",
-      location: job.location,
-      type: prettyType(job.type),
+      company: job.company?.name || "Company not specified",
+      location: job.location || "Location not specified",
+      type: prettyType(job.type || "full-time"),
       salary: formatSalary(job.salary),
-      description: job.description,
-      requirements: job.requirements,
-      postedDate: job.createdAt || "",
-      category: job.category,
-      companySize: "",
-      companyDescription: job.company?.description || "",
+      description: job.description || "No description provided.",
+      requirements: Array.isArray(job.requirements) && job.requirements.length > 0 
+        ? job.requirements 
+        : ["No specific requirements listed"],
+      postedDate: job.createdAt || new Date().toISOString(),
+      category: job.category || "General"
     }
   }, [job])
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <UserHeader />
 
       <main className="flex-1 py-8 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Back button */}
           <Button variant="ghost" asChild className="mb-6">
-            <Link href="/">
+            <Link href="/jobs">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Jobs
             </Link>
@@ -110,14 +137,6 @@ export default function JobDetailsPage() {
                           <Building className="h-5 w-5 mr-2" />
                           <span className="text-lg">{ui.company}</span>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm">
-                          <Share2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Bookmark className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
 
@@ -174,41 +193,57 @@ export default function JobDetailsPage() {
                   </CardContent>
                 </Card>
 
-                {/* Benefits placeholder - your backend doesn't return benefits */}
               </div>
 
-              {/* Sidebar */}
-              <div className="space-y-6">
-                {/* Apply Card */}
+              {/* Apply Section */}
+              <div>
                 <Card>
                   <CardHeader>
                     <CardTitle>Apply for this position</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Button className="w-full" size="lg" onClick={() => setIsApplyModalOpen(true)}>
-                      Apply Now
-                    </Button>
+                    {existingApplication ? (
+                      <div className="space-y-4 text-center">
+                        <div className="p-4 bg-green-50 text-green-800 rounded-md">
+                          <p className="font-medium">Application Submitted</p>
+                          <p className="text-sm">Status: <span className="capitalize">{existingApplication.status}</span></p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={() => setShowEditModal(true)}
+                          >
+                            Edit Application
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            className="flex-1"
+                            onClick={() => setShowWithdrawDialog(true)}
+                          >
+                            Withdraw
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button 
+                        className="w-full" 
+                        size="lg" 
+                        onClick={() => {
+                          if (!user) {
+                            // Redirect to login or show login modal
+                            window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname)
+                            return
+                          }
+                          setIsApplyModalOpen(true)
+                        }}
+                      >
+                        Apply Now
+                      </Button>
+                    )}
                     <p className="text-xs text-muted-foreground text-center">
                       By applying, you agree to our Terms of Service and Privacy Policy
                     </p>
-                  </CardContent>
-                </Card>
-
-                {/* Company Info */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>About {ui.company}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Users className="h-4 w-4 mr-2" />
-                      <span>{ui.companySize}</span>
-                    </div>
-                    <Separator />
-                    <p className="text-sm text-muted-foreground leading-relaxed">{ui.companyDescription}</p>
-                    <Button variant="outline" className="w-full bg-transparent">
-                      View Company Profile
-                    </Button>
                   </CardContent>
                 </Card>
               </div>
@@ -219,7 +254,35 @@ export default function JobDetailsPage() {
 
       <Footer />
 
-      {ui && (
+      <WithdrawConfirmDialog
+        isOpen={showWithdrawDialog}
+        onClose={() => setShowWithdrawDialog(false)}
+        onConfirm={async () => {
+          if (!existingApplication?._id) return
+          await applicationService.withdraw(existingApplication._id)
+          setExistingApplication(null)
+        }}
+      />
+
+      {existingApplication && (
+        <EditApplicationModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          application={existingApplication}
+          onUpdate={(updatedApp) => {
+            // Update the local state with the updated application
+            setExistingApplication(updatedApp)
+            
+            // Show success toast
+            toast({
+              title: "Success",
+              description: "Your application has been updated successfully.",
+            })
+          }}
+        />
+      )}
+
+      {ui && !existingApplication && (
         <ApplyModal
           isOpen={isApplyModalOpen}
           onClose={() => setIsApplyModalOpen(false)}

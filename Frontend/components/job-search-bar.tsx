@@ -1,68 +1,47 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, MapPin, Briefcase } from "lucide-react"
+import { Search } from "lucide-react"
 
 export function JobSearchBar() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [location, setLocation] = useState("")
-  const [category, setCategory] = useState("")
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || "")
 
-  const handleSearch = () => {
-    // TODO: Implement search functionality
-    console.log("Search:", { searchQuery, location, category })
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const params = new URLSearchParams()
+    
+    if (searchQuery.trim()) {
+      params.set('search', searchQuery.trim())
+    } else {
+      params.delete('search')
+    }
+    
+    // Update the URL with the search query
+    router.push(`/jobs?${params.toString()}`)
   }
 
   return (
-    <div className="bg-card border rounded-lg p-6 shadow-sm max-w-4xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="relative">
+    <form onSubmit={handleSearch} className="max-w-3xl mx-auto bg-white p-2 rounded-lg shadow-md">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Job title or keywords"
+            type="search"
+            placeholder="Search for jobs, companies, or keywords"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-12 text-base border-0 focus-visible:ring-2 focus-visible:ring-blue-500"
           />
         </div>
-
-        <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-
-        <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger>
-            <div className="flex items-center">
-              <Briefcase className="h-4 w-4 text-muted-foreground mr-2" />
-              <SelectValue placeholder="Category" />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="technology">Technology</SelectItem>
-            <SelectItem value="marketing">Marketing</SelectItem>
-            <SelectItem value="design">Design</SelectItem>
-            <SelectItem value="sales">Sales</SelectItem>
-            <SelectItem value="finance">Finance</SelectItem>
-            <SelectItem value="healthcare">Healthcare</SelectItem>
-            <SelectItem value="education">Education</SelectItem>
-            <SelectItem value="engineering">Engineering</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Button onClick={handleSearch} className="w-full">
-          <Search className="h-4 w-4 mr-2" />
-          Search Jobs
+        <Button type="submit" size="lg" className="h-12 px-6">
+          Search
         </Button>
       </div>
-    </div>
+    </form>
   )
 }

@@ -54,6 +54,13 @@ router.get(
   applicationController.getJobApplications
 );
 
+// Update application (authentication required)
+router.patch(
+  '/:id',
+  authMiddleware,
+  applicationController.updateApplication
+);
+
 // Update application status (authentication required)
 router.patch(
   '/:id/status',

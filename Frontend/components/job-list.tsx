@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { JobCard } from "@/components/job-card";
 import { jobService, Job } from "@/services/jobService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -57,30 +58,52 @@ function mapJobToUI(job: Job): UIJob {
   };
 }
 
-export function JobList() {
+interface JobListProps {
+  searchQuery?: string;
+}
+
+export function JobList({ searchQuery = '' }: JobListProps) {
   const [jobs, setJobs] = useState<UIJob[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  
+  // Get search query from URL params if not passed as prop
+  const search = searchQuery || searchParams.get('search') || '';
 
   useEffect(() => {
     let active = true;
-    (async () => {
+    
+    const fetchJobs = async () => {
       try {
-        const res = await jobService.getJobs({ limit: 9 });
-        if (!active) return;
-        const mapped = (res.jobs || []).map(mapJobToUI);
-        setJobs(mapped);
-      } catch (e: any) {
-        const message = e?.response?.data?.message || e?.message || "Failed to load jobs";
-        setError(message);
+        setLoading(true);
+        const data = await jobService.getJobs({
+          search: search || undefined,
+          // Add other filters here as needed
+        });
+        
+        if (active) {
+          setJobs(data.jobs.map(mapJobToUI));
+          setError(null);
+        }
+      } catch (err) {
+        if (active) {
+          setError('Failed to load jobs. Please try again later.');
+          console.error('Error fetching jobs:', err);
+        }
       } finally {
-        if (active) setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
-    })();
+    };
+
+    fetchJobs();
+    
     return () => {
       active = false;
     };
-  }, []);
+  }, [search]); // Re-fetch when search query changes
 
   if (loading) {
     return (
@@ -102,8 +125,13 @@ export function JobList() {
 
   if (jobs.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">No jobs found.</p>
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">
+          {search 
+            ? `No jobs found matching "${search}". Try different keywords.`
+            : 'No jobs found. Please check back later.'
+          }
+        </p>
       </div>
     );
   }

@@ -81,6 +81,14 @@ export const errorHandler = (
   } else if (process.env.NODE_ENV === 'production') {
     let error = { ...err };
     error.message = err.message;
+    
+    // Handle bcrypt errors
+    if (error.message.includes('Illegal arguments') || error.message.includes('data and hash arguments required')) {
+      error.message = 'Invalid password format';
+      error.statusCode = 400;
+      error.status = 'fail';
+      return sendErrorProd(error, res);
+    }
 
     if (error.name === 'CastError') error = handleCastErrorDB(error);
     if (error.code === 11000) error = handleDuplicateFieldsDB(error);
