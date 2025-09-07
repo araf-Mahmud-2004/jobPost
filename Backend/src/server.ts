@@ -94,8 +94,10 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// For Vercel serverless
-export default async (req: any, res: any) => {
+// For Vercel serverless - handle the request
+const handler = async (req: any, res: any) => {
   await connectDB();
   return app(req, res);
 };
+
+export default handler;
