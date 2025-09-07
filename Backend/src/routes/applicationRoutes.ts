@@ -54,6 +54,13 @@ router.get(
   applicationController.getJobApplications
 );
 
+// Get applications for jobs posted by the current user (authentication required)
+router.get(
+  '/my-jobs/applications',
+  authMiddleware,
+  applicationController.getMyJobApplications
+);
+
 // Update application (authentication required)
 router.patch(
   '/:id',

@@ -4,6 +4,7 @@ import { Application, IApplication } from '../models/applicationModel';
 import { Job, IJob } from '../models/jobModel';
 import mongoose from 'mongoose';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { IUser } from '../models/userModel';
 
 // Extend the Request type to include user information
 declare global {
@@ -248,25 +249,40 @@ export const getJobApplications = async (req: Request, res: Response, next: Next
 // Update application status
 export const updateApplicationStatus = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const { id } = req.params;
     const { status, feedback } = req.body;
-    
-    const application = await Application.findById(req.params.id);
-    
+
+    const application = await Application.findByIdAndUpdate(
+      id,
+      { status, feedback },
+      { new: true, runValidators: true }
+    ).populate('job', 'title company.name').populate('user', 'name email');
+
     if (!application) {
-      return next(new AppError('No application found with that ID', 404));
+      return next(new AppError('Application not found', 404));
     }
 
-    // Update application status
-    application.status = status;
-    if (feedback) {
-      application.feedback = feedback;
+    // Send notification to the applicant
+    if (status === 'accepted' || status === 'rejected') {
+      const job = application.job as any;
+      const user = application.user as any;
+      
+      console.log(`Notification: Application for "${job.title}" has been ${status}`);
+      console.log(`Applicant: ${user.name} (${user.email})`);
+      
+      // TODO: Implement actual email/notification service here
+      // For now, we'll just log the notification
+      // In a real application, you would:
+      // 1. Send an email to user.email
+      // 2. Create an in-app notification
+      // 3. Send a push notification if applicable
     }
-    application.updatedAt = new Date();
-    
-    await application.save();
 
     res.status(200).json({
       status: 'success',
+      message: status === 'accepted' || status === 'rejected' 
+        ? `Application ${status} successfully. Applicant has been notified.`
+        : 'Application status updated successfully.',
       data: {
         application,
       },
@@ -313,6 +329,66 @@ export const updateApplication = async (req: AuthRequest, res: Response, next: N
       status: 'success',
       data: {
         application: updatedApplication
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get applications for jobs posted by the current user
+export const getMyJobApplications = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    // Ensure user is authenticated
+    if (!req.user || !req.user.id) {
+      return next(new AppError('Authentication required', 401));
+    }
+
+    console.log('User ID:', req.user.id);
+    
+    // Find all jobs created by the current user
+    const jobs = await Job.find({ createdBy: req.user.id }).select('_id');
+    console.log('Jobs found:', jobs);
+    
+    if (jobs.length === 0) {
+      return res.status(200).json({
+        status: 'success',
+        results: 0,
+        message: 'No jobs found for this user',
+        data: {
+          applications: []
+        }
+      });
+    }
+
+    const jobIds = jobs.map(job => job._id);
+    console.log('Job IDs:', jobIds);
+
+    // Find all applications for these jobs
+    const applications = await Application.find({ 
+      job: { $in: jobIds } 
+    })
+    .populate({
+      path: 'job',
+      select: 'title company.name createdBy',
+      populate: {
+        path: 'createdBy',
+        select: 'name email'
+      }
+    })
+    .populate({
+      path: 'user',
+      select: 'name email profile'
+    })
+    .sort('-appliedAt');
+
+    console.log('Applications found:', applications.length);
+
+    res.status(200).json({
+      status: 'success',
+      results: applications.length,
+      data: {
+        applications
       }
     });
   } catch (error) {

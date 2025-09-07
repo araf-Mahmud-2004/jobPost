@@ -172,10 +172,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <UserHeader />
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
+      <main className="container mx-auto px-4 py-8">
+        <div className="grid gap-8 md:grid-cols-3">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Welcome back, {userName}!</h1>
           <p className="text-muted-foreground">Here's what's happening with your job search</p>
         </div>
@@ -218,55 +218,76 @@ export default function DashboardPage() {
         
         {/* Recent Activity */}
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold">Recent Activity</h2>
-          
-          <Card className="bg-white shadow-sm">
-            <CardContent className="p-0">
-              {recentActivity.length > 0 ? (
-                <div className="divide-y">
-                  {recentActivity.map((app) => (
-                    <div key={app._id} className="p-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-medium">{app.job.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {app.job.company.name}
-                          </p>
+          <div className="md:col-span-2">
+            <h2 className="text-2xl font-bold mb-6">My Applications</h2>
+            <Card className="bg-white shadow-sm">
+              <CardContent className="p-0">
+                {recentActivity.length > 0 ? (
+                  <div className="divide-y">
+                    {recentActivity.map((app) => (
+                      <div key={app._id} className="p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-medium">{app.job.title}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {app.job.company.name}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge 
+                              variant={getStatusVariant(app.status)}
+                              className="capitalize"
+                            >
+                              {app.status.replace('_', ' ')}
+                            </Badge>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge 
-                            variant={getStatusVariant(app.status)}
-                            className="capitalize"
-                          >
-                            {app.status.replace('_', ' ')}
-                          </Badge>
+                        <div className="flex items-center mt-2 text-sm text-muted-foreground">
+                          <ClockIcon className="h-4 w-4 mr-1" />
+                          Applied on {new Date(app.appliedAt).toLocaleDateString()}
                         </div>
                       </div>
-                      <div className="flex items-center mt-2 text-sm text-muted-foreground">
-                        <ClockIcon className="h-4 w-4 mr-1" />
-                        Applied on {new Date(app.appliedAt).toLocaleDateString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-8 text-center">
-                  <FileText className="mx-auto h-12 w-12 text-gray-300 mb-2" />
-                  <h3 className="text-lg font-medium text-gray-900">No recent activity</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Get started by applying to jobs that match your skills.
-                  </p>
-                  <div className="mt-6">
-                    <Button asChild>
-                      <Link href="/jobs">Browse Jobs</Link>
-                    </Button>
+                    ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="p-8 text-center">
+                    <FileText className="mx-auto h-12 w-12 text-gray-300 mb-2" />
+                    <h3 className="text-lg font-medium text-gray-900">No recent activity</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Get started by applying to jobs that match your skills.
+                    </p>
+                    <div className="mt-6">
+                      <Button asChild>
+                        <Link href="/jobs">Browse Jobs</Link>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Posted Jobs Card */}
+          <Card className="h-fit">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5" />
+                <span>My Posted Jobs</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                View and manage applications for your posted jobs
+              </p>
+              <Button asChild className="w-full">
+                <Link href="/dashboard/my-jobs">
+                  <FileText className="mr-2 h-4 w-4" /> View Applications
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         </div>
-      </div>
+      </main>
     </div>
   )
 }
