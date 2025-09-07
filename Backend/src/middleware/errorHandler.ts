@@ -4,7 +4,7 @@ import { ZodError } from 'zod';
 export interface AppError extends Error {
   statusCode: number;
   status: string;
-  isOperational?: boolean;
+  isOperational: boolean;
   code?: number;
 }
 

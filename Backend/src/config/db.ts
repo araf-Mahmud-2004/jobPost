@@ -10,57 +10,23 @@ if (!MONGODB_URI) {
   );
 }
 
-// Extend NodeJS global type with mongoose cache
-declare global {
-  // eslint-disable-next-line no-var
-  var mongoose: {
-    conn: typeof mongoose | null;
-    promise: Promise<typeof mongoose> | null;
-  } | undefined;
-}
-
-// Cached connection to avoid multiple connections in development
-const globalWithMongoose = global as typeof globalThis & {
-  mongoose: {
-    conn: typeof mongoose | null;
-    promise: Promise<typeof mongoose> | null;
-  };
-};
-
-let cached = globalWithMongoose.mongoose;
-
-if (!cached) {
-  cached = globalWithMongoose.mongoose = { conn: null, promise: null };
-}
 
 /**
  * Establishes a connection to MongoDB using Mongoose
  * @returns {Promise<typeof mongoose>}
  */
 export const connectDB = async (): Promise<typeof mongoose> => {
-  if (cached.conn) {
-    console.log('Using existing database connection');
-    return cached.conn;
-  }
-
-  if (!cached.promise) {
-    console.log('Creating new database connection to:', MONGODB_URI);
-    const opts: mongoose.ConnectOptions = {
-      bufferCommands: false,
-      serverSelectionTimeoutMS: 10000, // 10 seconds timeout
-    };
-
-    cached.promise = mongoose.connect(MONGODB_URI, opts);
-  }
+  console.log('Creating new database connection to:', MONGODB_URI);
+  const opts: mongoose.ConnectOptions = {
+    bufferCommands: false,
+    serverSelectionTimeoutMS: 10000, // 10 seconds timeout
+  };
 
   try {
-    console.log('Waiting for database connection...');
-    const conn = await cached.promise;
+    const conn = await mongoose.connect(MONGODB_URI, opts);
     if (!conn) {
       throw new Error('Failed to establish database connection');
     }
-
-    cached.conn = conn;
     console.log('Database connected successfully');
     
     // Log all collections
@@ -83,12 +49,11 @@ export const connectDB = async (): Promise<typeof mongoose> => {
     return conn;
   } catch (e) {
     console.error('Database connection error:', e);
-    cached.promise = null;
     if (e instanceof Error) {
       throw new AppError(`Database connection failed: ${e.message}`, 500);
     }
     throw new AppError('Database connection failed', 500);
   }
-}
+};
 
 export default connectDB;
