@@ -43,7 +43,7 @@ export function WithdrawConfirmDialog({ isOpen, onClose, onConfirm }: WithdrawCo
           <Alert variant="destructive" className="flex items-start">
             <AlertCircle className="h-5 w-5 mt-0.5 mr-2" />
             <AlertDescription>
-              This action cannot be undone. You'll need to reapply if you change your mind.
+              This will withdraw your application. You can reapply for this job again if you change your mind.
             </AlertDescription>
           </Alert>
         </div>

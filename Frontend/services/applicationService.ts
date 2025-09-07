@@ -41,12 +41,4 @@ export const applicationService = {
     await api.delete(`/applications/${id}`);
   },
 
-  async updateApplication(id: string, updates: { coverLetter?: string; resume?: string }): Promise<Application> {
-    const res = await api.patch(`/applications/${id}`, updates, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    return res.data?.data?.application as Application;
-  },
 };

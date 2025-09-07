@@ -19,6 +19,25 @@ import Link from "next/link"
 import { applicationService } from "@/services/applicationService"
 import { jobService } from "@/services/jobService"
 
+// Helper function to get badge variant based on application status
+const getStatusVariant = (status: string) => {
+  switch (status.toLowerCase()) {
+    case 'pending':
+      return 'secondary'
+    case 'under_review':
+    case 'reviewing':
+      return 'default'
+    case 'accepted':
+      return 'default' // Green badge
+    case 'rejected':
+      return 'destructive'
+    case 'withdrawn':
+      return 'outline'
+    default:
+      return 'secondary'
+  }
+}
+
 // Define our application type based on the service response
 type Application = {
   _id: string
@@ -53,7 +72,7 @@ type Job = {
 export default function DashboardPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { isAdmin } = useAuth()
+  const { user, isAdmin, loading: authLoading } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
   const [userName, setUserName] = useState<string>("User")
   const [stats, setStats] = useState({
@@ -64,10 +83,10 @@ export default function DashboardPage() {
   const [recommendedJobs, setRecommendedJobs] = useState<Array<Job & { matchScore?: number }>>([])
 
   useEffect(() => {
-    if (isAdmin) {
+    if (!authLoading && isAdmin) {
       router.replace('/admin')
     }
-  }, [isAdmin, router])
+  }, [isAdmin, router, authLoading])
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -117,8 +136,10 @@ export default function DashboardPage() {
           matchScore: Math.floor(Math.random() * 20) + 80 // Random score between 80-100
         })))
         
-        // Set user data (in real app, this would come from auth context)
-        setUserName("John")
+        // Set user data from auth context
+        if (user?.name) {
+          setUserName(user.name)
+        }
         
       } catch (error) {
         console.error("Failed to load dashboard data:", error)
@@ -132,24 +153,14 @@ export default function DashboardPage() {
       }
     }
     
-    fetchDashboardData()
-  }, [toast])
-
-  const getStatusVariant = (status: string) => {
-    switch(status) {
-      case 'pending': return 'secondary'
-      case 'interview':
-      case 'interview_scheduled':
-      case 'offer':
-        return 'default'
-      case 'rejected':
-        return 'destructive'
-      default:
-        return 'secondary'
+    // Only fetch dashboard data if user is not admin and auth has finished loading
+    if (!authLoading && !isAdmin) {
+      fetchDashboardData()
     }
-  }
+  }, [toast, authLoading, isAdmin])
 
-  if (isLoading) {
+  // Show loading state while auth is loading or if user is admin (will redirect)
+  if (authLoading || isAdmin) {
     return (
       <div className="min-h-screen bg-gray-50">
         <UserHeader />

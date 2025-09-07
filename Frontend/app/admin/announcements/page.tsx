@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,53 +11,58 @@ import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Megaphone, Send, Calendar, Users } from "lucide-react"
+import { Megaphone, Send, Calendar, Users, Trash2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { adminService } from "@/services/adminService"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface Announcement {
-  id: string
+  _id: string
   title: string
   message: string
-  sentDate: string
+  sentBy: {
+    name: string
+    email: string
+  }
+  sentAt: string
   recipientCount: number
-  status: "sent" | "draft"
 }
 
-// Mock data - in real app, this would come from API
-const mockAnnouncements: Announcement[] = [
-  {
-    id: "1",
-    title: "Platform Maintenance Scheduled",
-    message: "We will be performing scheduled maintenance on our platform this weekend...",
-    sentDate: "2024-01-18",
-    recipientCount: 1247,
-    status: "sent",
-  },
-  {
-    id: "2",
-    title: "New Features Available",
-    message: "We're excited to announce new features that will enhance your job search experience...",
-    sentDate: "2024-01-15",
-    recipientCount: 1200,
-    status: "sent",
-  },
-  {
-    id: "3",
-    title: "Welcome to JobPortal",
-    message: "Thank you for joining our platform. Here's how to get started...",
-    sentDate: "2024-01-10",
-    recipientCount: 1150,
-    status: "sent",
-  },
-]
-
 export default function AnnouncementsPage() {
-  const [announcements, setAnnouncements] = useState<Announcement[]>(mockAnnouncements)
+  const { toast } = useToast()
+  const { user } = useAuth()
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     title: "",
     message: "",
   })
-  const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState("")
+
+  // Fetch announcements on component mount
+  useEffect(() => {
+    fetchAnnouncements()
+  }, [])
+
+  const fetchAnnouncements = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const fetchedAnnouncements = await adminService.getAllAnnouncements()
+      setAnnouncements(fetchedAnnouncements)
+    } catch (err) {
+      console.error('Failed to fetch announcements:', err)
+      setError('Failed to load announcements')
+      toast({
+        title: "Error",
+        description: "Failed to load announcements. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -65,30 +70,92 @@ export default function AnnouncementsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-    setMessage("")
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to send announcements.",
+        variant: "destructive"
+      })
+      return
+    }
 
+    setSubmitting(true)
     try {
-      // TODO: Implement actual announcement sending logic
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      const newAnnouncement: Announcement = {
-        id: Date.now().toString(),
+      const newAnnouncement = await adminService.createAnnouncement({
         title: formData.title,
         message: formData.message,
-        sentDate: new Date().toISOString().split("T")[0],
-        recipientCount: 1247, // Mock recipient count
-        status: "sent",
-      }
+        sentBy: user.id,
+      })
 
       setAnnouncements([newAnnouncement, ...announcements])
       setFormData({ title: "", message: "" })
-      setMessage("Announcement sent successfully to all users!")
-    } catch (error) {
-      setMessage("Failed to send announcement. Please try again.")
+      toast({
+        title: "Success",
+        description: "Announcement sent successfully to all users!",
+      })
+    } catch (err) {
+      console.error('Failed to send announcement:', err)
+      toast({
+        title: "Error",
+        description: "Failed to send announcement. Please try again.",
+        variant: "destructive"
+      })
     } finally {
-      setIsLoading(false)
+      setSubmitting(false)
     }
+  }
+
+  const handleDeleteAnnouncement = async (announcementId: string) => {
+    try {
+      await adminService.deleteAnnouncement(announcementId)
+      // Refresh the announcements list
+      await fetchAnnouncements()
+      toast({
+        title: "Success",
+        description: "Announcement deleted successfully.",
+      })
+    } catch (err) {
+      console.error('Failed to delete announcement:', err)
+      toast({
+        title: "Error",
+        description: "Failed to delete announcement. Please try again.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="space-y-2">
+          <div className="h-8 bg-muted rounded animate-pulse" />
+          <div className="h-4 bg-muted rounded animate-pulse w-1/2" />
+        </div>
+        <div className="space-y-4">
+          <div className="h-12 bg-muted rounded animate-pulse" />
+          <div className="h-64 bg-muted rounded animate-pulse" />
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="space-y-2">
+          <div className="h-8 bg-muted rounded animate-pulse" />
+          <div className="h-4 bg-muted rounded animate-pulse w-1/2" />
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <p className="text-muted-foreground mb-4">{error}</p>
+              <Button onClick={fetchAnnouncements}>Try Again</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -110,12 +177,6 @@ export default function AnnouncementsPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {message && (
-                <Alert>
-                  <AlertDescription>{message}</AlertDescription>
-                </Alert>
-              )}
-
               <div className="space-y-2">
                 <Label htmlFor="title">Announcement Title</Label>
                 <Input
@@ -145,12 +206,12 @@ export default function AnnouncementsPage() {
                   <span>This announcement will be sent to all registered users</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Estimated recipients: <strong>1,247 users</strong>
+                  Estimated recipients: <strong>{announcements.length > 0 ? announcements[0]?.recipientCount || 0 : 0} users</strong>
                 </p>
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full">
-                {isLoading ? (
+              <Button type="submit" disabled={submitting} className="w-full">
+                {submitting ? (
                   "Sending..."
                 ) : (
                   <>
@@ -166,29 +227,41 @@ export default function AnnouncementsPage() {
         {/* Previous Announcements */}
         <Card>
           <CardHeader>
-            <CardTitle>Previous Announcements</CardTitle>
+            <CardTitle>Previous Announcements ({announcements.length})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {announcements.map((announcement, index) => (
-                <div key={announcement.id}>
+                <div key={announcement._id}>
                   <div className="space-y-2">
                     <div className="flex items-start justify-between">
                       <h4 className="font-medium text-foreground">{announcement.title}</h4>
-                      <Badge variant="outline" className="text-xs">
-                        {announcement.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          Sent
+                        </Badge>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteAnnouncement(announcement._id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                     <p className="text-sm text-muted-foreground line-clamp-2">{announcement.message}</p>
                     <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                       <div className="flex items-center">
                         <Calendar className="h-3 w-3 mr-1" />
-                        <span>{new Date(announcement.sentDate).toLocaleDateString()}</span>
+                        <span>{new Date(announcement.sentAt).toLocaleDateString()}</span>
                       </div>
                       <div className="flex items-center">
                         <Users className="h-3 w-3 mr-1" />
                         <span>{announcement.recipientCount.toLocaleString()} recipients</span>
                       </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Sent by: {announcement.sentBy.name}
                     </div>
                   </div>
                   {index < announcements.length - 1 && <Separator className="mt-4" />}

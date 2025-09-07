@@ -17,7 +17,6 @@ import { useAuth } from "@/contexts/AuthContext"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import { WithdrawConfirmDialog } from "@/components/withdraw-confirm-dialog"
-import { EditApplicationModal } from "@/components/edit-application-modal"
 
 function formatSalary(salary?: number): string {
   if (typeof salary !== "number") return "Not specified"
@@ -39,7 +38,6 @@ export default function JobDetailsPage() {
   const [error, setError] = useState<string>("")
   const [existingApplication, setExistingApplication] = useState<any>(null)
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false)
   const { user } = useAuth()
   const { toast } = useToast()
 
@@ -210,18 +208,11 @@ export default function JobDetailsPage() {
                         </div>
                         <div className="flex gap-2">
                           <Button 
-                            variant="outline" 
-                            className="flex-1"
-                            onClick={() => setShowEditModal(true)}
-                          >
-                            Edit Application
-                          </Button>
-                          <Button 
                             variant="destructive" 
-                            className="flex-1"
+                            className="w-full"
                             onClick={() => setShowWithdrawDialog(true)}
                           >
-                            Withdraw
+                            Withdraw Application
                           </Button>
                         </div>
                       </div>
@@ -264,23 +255,6 @@ export default function JobDetailsPage() {
         }}
       />
 
-      {existingApplication && (
-        <EditApplicationModal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          application={existingApplication}
-          onUpdate={(updatedApp) => {
-            // Update the local state with the updated application
-            setExistingApplication(updatedApp)
-            
-            // Show success toast
-            toast({
-              title: "Success",
-              description: "Your application has been updated successfully.",
-            })
-          }}
-        />
-      )}
 
       {ui && !existingApplication && (
         <ApplyModal

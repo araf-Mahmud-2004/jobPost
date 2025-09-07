@@ -9,14 +9,8 @@ type User = {
 };
 
 export const getCurrentUser = (): User | null => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  if (!token) return null;
-
-  try {
-    return JSON.parse(localStorage.getItem('user') || 'null');
-  } catch {
-    return null;
-  }
+  // In a real app, you would get this from your auth context or session
+  return null;
 };
 
 export const isAuthenticated = (): boolean => {

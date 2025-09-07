@@ -6,6 +6,7 @@ export interface IUser extends Document {
   password: string;
   role: "user" | "admin";
   isVerified: boolean;
+  isBanned: boolean;
   resumeFileId?: string;
 }
 
@@ -16,6 +17,7 @@ const userSchema = new Schema<IUser>(
     password: { type: String, required: true },
     role: { type: String, enum: ["user", "admin"], default: "user" },
     isVerified: { type: Boolean, default: false },
+    isBanned: { type: Boolean, default: false },
     resumeFileId: { type: String },
   },
   { timestamps: true }

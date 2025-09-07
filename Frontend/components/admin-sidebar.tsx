@@ -10,7 +10,6 @@ import {
   Briefcase,
   FileText,
   Megaphone,
-  Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -25,7 +24,6 @@ const navigation = [
   { name: "Manage Jobs", href: "/admin/jobs", icon: Briefcase },
   { name: "View Applicants", href: "/admin/applicants", icon: FileText },
   { name: "Announcements", href: "/admin/announcements", icon: Megaphone },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
 ]
 
 export function AdminSidebar() {

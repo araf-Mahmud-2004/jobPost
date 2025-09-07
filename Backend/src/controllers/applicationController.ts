@@ -292,51 +292,6 @@ export const updateApplicationStatus = async (req: Request, res: Response, next:
   }
 };
 
-// Update application
-export const updateApplication = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const { coverLetter, resume } = req.body;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return next(new AppError('Invalid application ID format', 400));
-    }
-
-    const application = await Application.findById(id);
-
-    if (!application) {
-      return next(new AppError('No application found with that ID', 404));
-    }
-
-    // Check if the user is the owner of the application
-    if (req.user && application.user.toString() !== req.user.id) {
-      return next(new AppError('Not authorized to update this application', 403));
-    }
-
-    // Update fields if they are provided
-    if (coverLetter !== undefined) application.coverLetter = coverLetter;
-    if (resume !== undefined) application.resume = resume;
-
-    const updatedApplication = await application.save();
-
-    // Populate job and user details for the response
-    await updatedApplication.populate([
-      { path: 'job', select: 'title company' },
-      { path: 'user', select: 'name email' }
-    ]);
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        application: updatedApplication
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Get applications for jobs posted by the current user
 export const getMyJobApplications = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     // Ensure user is authenticated
