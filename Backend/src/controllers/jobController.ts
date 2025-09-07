@@ -171,31 +171,48 @@ export const deleteJob = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
-// Get jobs stats (for dashboard)
+// Get platform stats (for home page)
 export const getJobStats = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const stats = await Job.aggregate([
-      {
-        $match: { status: 'open' }
-      },
-      {
-        $group: {
-          _id: '$category',
-          count: { $sum: 1 },
-          avgSalary: { $avg: '$salary' },
-          minSalary: { $min: '$salary' },
-          maxSalary: { $max: '$salary' },
+    const [
+      totalJobs,
+      totalUsers,
+      totalCompanies,
+      categoryStats
+    ] = await Promise.all([
+      Job.countDocuments({ status: 'open' }),
+      // For now, we'll use a placeholder for users count since User model might not be available
+      // This should be replaced with actual User.countDocuments() when user model is available
+      Promise.resolve(0),
+      Job.distinct('company.name').then(companies => companies.length),
+      Job.aggregate([
+        {
+          $match: { status: 'open' }
         },
-      },
-      {
-        $sort: { count: -1 },
-      },
+        {
+          $group: {
+            _id: '$category',
+            count: { $sum: 1 },
+            avgSalary: { $avg: '$salary' },
+            minSalary: { $min: '$salary' },
+            maxSalary: { $max: '$salary' },
+          },
+        },
+        {
+          $sort: { count: -1 },
+        },
+      ])
     ]);
 
     res.status(200).json({
       status: 'success',
       data: {
-        stats,
+        platformStats: {
+          totalJobs,
+          totalUsers,
+          totalCompanies
+        },
+        categoryStats,
       },
     });
   } catch (error) {
