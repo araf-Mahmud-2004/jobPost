@@ -34,10 +34,16 @@ export default function LoginPage() {
     try {
       const token = await authService.login({ email, password })
       await login(token)
-      await refreshUser()
-      if (isAdmin) {
+      
+      // Get fresh user data to check role
+      const userData = await authService.me()
+      console.log('Fresh user data for redirect:', userData)
+      
+      if (userData.role === 'admin') {
+        console.log('Redirecting to admin dashboard')
         router.push("/admin")
       } else {
+        console.log('Redirecting to user dashboard')
         router.push("/dashboard")
       }
     } catch (err: any) {
