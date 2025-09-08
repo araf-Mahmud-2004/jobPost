@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ApplyModal } from "@/components/apply-modal"
 import { MapPin, Clock, DollarSign, Building, Calendar, ArrowLeft, Briefcase } from "lucide-react"
-import { jobService, Job } from "@/services/jobService"
+import { jobService } from "@/services/jobService"
+import type { Job } from "@/services/jobService"
 import { applicationService } from "@/services/applicationService"
 import { useAuth } from "@/contexts/AuthContext"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -40,6 +41,16 @@ export default function JobDetailsPage() {
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false)
   const { user } = useAuth()
   const { toast } = useToast()
+
+  // Add debug logs when component mounts and when job or user changes
+  useEffect(() => {
+    console.log('User changed:', user)
+    console.log('Job data changed:', job)
+    if (user && job) {
+      console.log('User ID:', user.id, 'Job createdBy ID:', job.createdBy?._id)
+      console.log('Should hide apply section:', user.id === job.createdBy?._id)
+    }
+  }, [user, job])
 
   useEffect(() => {
     let active = true
@@ -193,14 +204,21 @@ export default function JobDetailsPage() {
 
               </div>
 
-              {/* Apply Section */}
-              <div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Apply for this position</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {existingApplication ? (
+              {/* Apply Section - Show different content based on user role */}
+              {!loading && user && job && job.createdBy && (
+                user.id === job.createdBy._id?.toString() ? (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800 rounded-md text-center">
+                    <p className="font-medium">You are the owner of this job posting</p>
+                    <p className="text-sm mt-1 text-blue-700 dark:text-blue-300">Manage applications from your dashboard</p>
+                  </div>
+                ) : (
+                <div>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Apply for this position</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {existingApplication ? (
                       <div className="space-y-4 text-center">
                         <div className="p-4 bg-green-50 text-green-800 rounded-md">
                           <p className="font-medium">Application Submitted</p>
@@ -231,13 +249,14 @@ export default function JobDetailsPage() {
                       >
                         Apply Now
                       </Button>
-                    )}
-                    <p className="text-xs text-muted-foreground text-center">
-                      By applying, you agree to our Terms of Service and Privacy Policy
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
+                      )}
+                      <p className="text-xs text-muted-foreground text-center">
+                        By applying, you agree to our Terms of Service and Privacy Policy
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              ))}
             </div>
           )}
         </div>

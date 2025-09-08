@@ -56,6 +56,11 @@ export const applyForJob = async (req: AuthRequest, res: Response, next: NextFun
     // Use authenticated user's ID
     const userId = req.user.id;
 
+    // Check if user is the job poster
+    if (job.createdBy && job.createdBy.toString() === userId) {
+      return next(new AppError('You cannot apply to your own job posting', 400));
+    }
+
     // Check if user already applied
     const existingApplication = await Application.findOne({
       job: new mongoose.Types.ObjectId(req.params.jobId),

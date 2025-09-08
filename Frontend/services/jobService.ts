@@ -17,7 +17,11 @@ export interface Job {
   requirements: string[];
   skills: string[];
   company: Company;
-  createdBy: string;
+  createdBy: {
+    _id: string;
+    name: string;
+    email: string;
+  };
   status: 'open' | 'closed';
   applications: string[];
   deadline?: string;
@@ -89,7 +93,13 @@ export const jobService = {
 
   // Create a new job
   async createJob(
-    jobData: Omit<Job, '_id' | 'createdAt' | 'updatedAt' | 'status' | 'createdBy' | 'applications'>
+    jobData: Omit<Job, '_id' | 'createdAt' | 'updatedAt' | 'status' | 'createdBy' | 'applications'> & {
+      createdBy: {
+        _id: string;
+        name: string;
+        email: string;
+      }
+    }
   ): Promise<Job> {
     const response = await api.post('/jobs', jobData);
     return response.data.data.job as Job;
