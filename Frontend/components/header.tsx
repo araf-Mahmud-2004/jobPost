@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Briefcase } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export function Header() {
   return (
@@ -16,28 +17,8 @@ export function Header() {
             </Link>
           </div>
 
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link
-              href="/"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Jobs
-            </Link>
-            <Link
-              href="/about"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              About
-            </Link>
-            <Link
-              href="/contact"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Contact
-            </Link>
-          </nav>
-
           <div className="flex items-center space-x-4">
+            <ThemeToggle />
             <Button variant="ghost" asChild>
               <Link href="/login">Sign In</Link>
             </Button>

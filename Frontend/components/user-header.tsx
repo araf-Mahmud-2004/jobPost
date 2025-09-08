@@ -11,8 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Briefcase, User, Settings, LogOut, Bell, LayoutDashboard, Menu } from "lucide-react"
+import { Briefcase, User, Settings, LogOut, LayoutDashboard } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export function UserHeader() {
   const { user, isAdmin, logout } = useAuth();
@@ -78,14 +79,12 @@ export function UserHeader() {
           </nav>
 
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm">
-              <Bell className="h-4 w-4" />
-            </Button>
+            <ThemeToggle />
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
-                  <Menu className="h-4 w-4" />
+                  <User className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-48" align="end">

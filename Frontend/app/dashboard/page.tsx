@@ -162,7 +162,7 @@ export default function DashboardPage() {
   // Show loading state while auth is loading or if user is admin (will redirect)
   if (authLoading || isAdmin) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <UserHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="grid gap-6">
@@ -186,14 +186,14 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background">
       <UserHeader />
       <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-8 md:grid-cols-3">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Welcome back, {userName}!</h1>
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome back, {userName}!</h1>
           <p className="text-muted-foreground">Here's what's happening with your job search</p>
         </div>
         
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <Card className="bg-white shadow-sm">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Active Applications</CardTitle>
               <FileText className="h-4 w-4 text-blue-500" />
@@ -206,7 +206,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
           
-          <Card className="bg-white shadow-sm">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Job Search</CardTitle>
               <Search className="h-4 w-4 text-green-500" />
@@ -231,12 +231,12 @@ export default function DashboardPage() {
         <div className="space-y-6">
           <div className="md:col-span-2">
             <h2 className="text-2xl font-bold mb-6">My Applications</h2>
-            <Card className="bg-white shadow-sm">
+            <Card>
               <CardContent className="p-0">
                 {recentActivity.length > 0 ? (
                   <div className="divide-y">
                     {recentActivity.map((app) => (
-                      <div key={app._id} className="p-4 hover:bg-gray-50 transition-colors">
+                      <div key={app._id} className="p-4 hover:bg-muted/50 transition-colors">
                         <div className="flex items-start justify-between">
                           <div>
                             <h3 className="font-medium">{app.job.title}</h3>
@@ -262,8 +262,8 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="p-8 text-center">
-                    <FileText className="mx-auto h-12 w-12 text-gray-300 mb-2" />
-                    <h3 className="text-lg font-medium text-gray-900">No recent activity</h3>
+                    <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+                    <h3 className="text-lg font-medium">No recent activity</h3>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Get started by applying to jobs that match your skills.
                     </p>

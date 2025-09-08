@@ -7,9 +7,9 @@ import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
+  title: 'JobPortal - Find Your Dream Job',
+  description: 'Discover amazing job opportunities and connect with top employers. Your career journey starts here.',
+  generator: 'Next.js',
 }
 
 export default function RootLayout({
